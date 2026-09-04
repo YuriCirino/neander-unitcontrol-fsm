@@ -6,7 +6,7 @@ module FSM( // Sequenciador: controla em qual passo do ciclo busca/decodificaç�
     output reg [2:0] state // estado atual (ajuste a largura conforme o número de estados que você definir)
     );
     parameter FETCH_STEP_1 = 4'b000; // Estado de busca 1
-    parameter FETC_STEP_2 = 4'b001; // Estado de busca 2
+    parameter FETCH_STEP_2 = 4'b001; // Estado de busca 2
     parameter DECODE = 4'b010; // Estado de decodificação
     parameter EXECUTE = 4'b011; // Estado de execução 1
     parameter FETCH_OPERAND_STEP_1 = 4'b100; // Estado de busca do operando, primeiro passo
@@ -21,11 +21,11 @@ module FSM( // Sequenciador: controla em qual passo do ciclo busca/decodificaç�
             state <= FETCH_STEP_1; // Estado inicial (ex: BUSCA1)
         end else begin
             case (state)
-                FETCH_STEP_1: state <= FETC_STEP_2; // Transição do estado de busca 1 para busca 2
-                FETC_STEP_2: state <= DECODE; // Transição do estado de busca 2 para decodificação
+                FETCH_STEP_1: state <= FETCH_STEP_2; // Transição do estado de busca 1 para busca 2
+                FETCH_STEP_2: state <= DECODE; // Transição do estado de busca 2 para decodificação
                 DECODE: begin
                     // Decisão baseada no opcode para determinar o próximo estado
-                    if (opcode == 4'b0110 || opcode == 4'b1111 || opcode == 4'b1010 || opcode == 4'b1001)begin
+                    if (opcode == 4'b0110 || opcode == 4'b1111)begin
                         state <= EXECUTE; // Transição para execução se não for uma instrução de salto ou HLT
                     end else begin 
                         state <= FETCH_OPERAND_STEP_1; // Transição para busca do operando se for uma instrução de salto ou HLT
