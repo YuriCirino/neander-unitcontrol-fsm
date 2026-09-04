@@ -33,10 +33,11 @@ module Unit_Control( // Unidade de controle completa: FSM (sequenciador) + decod
 
     parameter FETCH_STEP_1 = 3'b000; // Estado de busca 1
     parameter FETCH_STEP_2 = 3'b001; // Estado de busca 2
-    parameter DECODE = 3'b010; // Estado de decodificação
-    parameter EXECUTE = 3'b011; // Estado de execução
-    parameter FETCH_OPERAND_STEP_1 = 3'b100; // Estado de busca do operando, primeiro passo
     parameter FETCH_OPERAND_STEP_2 = 3'b101; // Estado de busca do operando, segundo passo
+    parameter FETCH_OPERAND_STEP_1 = 3'b100; // Estado de busca do operando, primeiro passo
+    parameter DECODE = 3'b010; // Estado de decodificação
+    parameter EXECUTE_STEP_1 = 3'b011; // Estado de execução, primeiro passo
+    parameter EXECUTE_STEP_2 = 3'b011; // Estado de execução, segundo passo
 
     wire [2:0] state; // sinal interno: liga a FSM ao decodificador, não faz parte da interface pública da UC
 
@@ -48,7 +49,7 @@ module Unit_Control( // Unidade de controle completa: FSM (sequenciador) + decod
     );
 
     always @(*) begin
-        // Valores padrão: evita inferência de latch para sinais não usados no estado/opcode atual
+        // Valores padrão: evita bugs
         carga_rem = 1'b0;
         carga_rdm = 1'b0;
         incrementa_pc = 1'b0;
@@ -68,29 +69,85 @@ module Unit_Control( // Unidade de controle completa: FSM (sequenciador) + decod
                 sel_rem = 1'b0;
                 carga_rem = 1'b1;
                 read = 1'b1;
+                write = 1'b0;
+                sel_rdm = 1'b0;
             end
             FETCH_STEP_2: begin
-                // RI <- RDM
-                sel_rdm = 1'b0;
+                // RDM <- MEM(REM)
                 carga_rdm = 1'b1;
                 carga_ri = 1'b1;
+                incrementa_pc = 1'b1; // Incrementa PC para apontar para o próximo byte
             end
             DECODE: begin
+                if (opcode != NOP) begin
+                    RI <- RDM
+                end
                 // TODO: sinais do estado de decodificação (se houver algum além da transição na FSM)
             end
             FETCH_OPERAND_STEP_1: begin
-                // TODO: busca do segundo byte (endereço do operando) - primeiro passo
+                // REM <- PC
+                sel_rem = 1'b0;
+                carga_rem = 1'b1;
+                read = 1'b1;
+                write = 1'b0;
+                sel_rdm = 1'b0;
             end
             FETCH_OPERAND_STEP_2: begin
-                // TODO: busca do segundo byte (endereço do operando) - segundo passo
+                // RDM <- MEM(REM)
+                sel_rdm = 1'b0;
+                carga_rdm = 1'b1;
+                carga_ac = 1'b0;
             end
-            EXECUTE: begin
+            
+            EXECUTE_STEP_1: begin
+                case (opcode)
+                    NOP: begin
+                    end
+                    STA: begin
+                        carga_rdm = 1'b0; // Desabilita a carga do registrador de dados da memória
+                        sel_rem = 1'b1; // Seleciona o a fonte de dados do REM, como o RDM
+                        carga_rem = 1'b1; // Carrega o endereço do operando no REM
+                        read = 1'b0; // Desabilita a leitura da memória
+
+                    end
+                    LDA: begin
+                        // TODO
+                    end
+                    ADD: begin
+                        // TODO
+                    end
+                    OR: begin
+                        // TODO
+                    end
+                    AND: begin
+                        // TODO
+                    end
+                    NOT: begin
+                        // TODO
+                    end
+                    JMP: begin
+                        // TODO
+                    end
+                    JZ: begin
+                        // TODO
+                    end
+                    JN: begin
+                        // TODO
+                    end
+                    HLT: begin
+                        // TODO
+                    end
+                endcase
+            end
+            EXECUTE_STEP_2: begin
                 case (opcode)
                     NOP: begin
                         incrementa_pc = 1'b1;
+
                     end
                     STA: begin
                         // TODO
+
                     end
                     LDA: begin
                         // TODO
